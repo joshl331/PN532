@@ -55,13 +55,13 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
         timeout--;
         if (0 == timeout)
         {
-            DMSG("Time out when waiting for ACK\n");
+            DMSG("[DEBUG] Time out when waiting for ACK\n");
             return -2;
         }
     }
     if (readAckFrame())
     {
-        DMSG("Invalid ACK\n");
+        DMSG("[DEBUG] Invalid ACK\n");
         return PN532_INVALID_ACK;
     }
     return 0;
@@ -112,7 +112,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
             break;
         }
 
-        DMSG("read:  ");
+        DMSG("[DEBUG] read:  ");
         DMSG_HEX(cmd);
 
         length -= 2;
@@ -122,7 +122,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
             {
                 DMSG_HEX(read()); // dump message
             }
-            DMSG("\nNot enough space\n");
+            DMSG("\n[DEBUG] Not enough space\n");
             read();
             read();
             result = PN532_NO_SPACE; // not enough space
@@ -142,7 +142,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         uint8_t checksum = read();
         if (0 != (uint8_t)(sum + checksum))
         {
-            DMSG("checksum is not ok\n");
+            DMSG("[DEBUG] checksum is not ok\n");
             result = PN532_INVALID_FRAME;
             break;
         }
@@ -183,7 +183,7 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
     write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532; // sum of TFI + DATA
 
-    DMSG("write: ");
+    DMSG("[DEBUG] write: ");
 
     for (uint8_t i = 0; i < hlen; i++)
     {

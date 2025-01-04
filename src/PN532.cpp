@@ -329,7 +329,7 @@ bool PN532::SAMConfig(void)
     pn532_packetbuffer[2] = 0x14; // timeout 50ms * 20 = 1 second
     pn532_packetbuffer[3] = 0x01; // use IRQ pin!
 
-    DMSG("SAMConfig\n");
+    DMSG("[DEBUG] SAMConfig\n");
 
     if (HAL(writeCommand)(pn532_packetbuffer, 4))
         return false;
