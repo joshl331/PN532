@@ -76,6 +76,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         time++;
         if (time > timeout)
         {
+            DMSG("[DEBUG] Time out while waiting to read response\n");
             return PN532_TIMEOUT;
         }
     }
