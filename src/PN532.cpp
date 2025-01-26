@@ -326,7 +326,7 @@ bool PN532::SAMConfig(void)
 {
     pn532_packetbuffer[0] = PN532_COMMAND_SAMCONFIGURATION;
     pn532_packetbuffer[1] = 0x01; // normal mode;
-    pn532_packetbuffer[2] = 0x14; // timeout 50ms * 20 = 1 second
+    pn532_packetbuffer[2] = 0x00; // timeout 
     pn532_packetbuffer[3] = 0x01; // use IRQ pin!
 
     DMSG("[DEBUG] SAMConfig\n");
