@@ -61,7 +61,6 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     }
     if (readAckFrame())
     {
-        DMSG("[DEBUG] Invalid ACK\n");
         return PN532_INVALID_ACK;
     }
     return 0;
@@ -113,7 +112,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
             break;
         }
 
-        DMSG("[DEBUG] read:  ");
+        DMSG("[DEBUG] Read:");
         DMSG_HEX(cmd);
 
         length -= 2;
@@ -171,6 +170,12 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
 {
     digitalWrite(_ss, LOW);
     delay(2); // wake up PN532
+    DMSG("[DEBUG] Write:");
+
+    DMSG_HEX(DATA_WRITE);
+    DMSG_HEX(PN532_PREAMBLE);
+    DMSG_HEX(PN532_STARTCODE1);
+    DMSG_HEX(PN532_STARTCODE2);
 
     write(DATA_WRITE);
     write(PN532_PREAMBLE);
@@ -178,13 +183,14 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
     write(PN532_STARTCODE2);
 
     uint8_t length = hlen + blen + 1; // length of data field: TFI + DATA
+    DMSG_HEX(length);
+    DMSG_HEX(!length + 1);
     write(length);
     write(~length + 1); // checksum of length
 
+    DMSG_HEX(PN532_HOSTTOPN532);
     write(PN532_HOSTTOPN532);
     uint8_t sum = PN532_HOSTTOPN532; // sum of TFI + DATA
-
-    DMSG("[DEBUG] write: ");
 
     for (uint8_t i = 0; i < hlen; i++)
     {
@@ -202,6 +208,8 @@ void PN532_SPI::writeFrame(const uint8_t *header, uint8_t hlen, const uint8_t *b
     }
 
     uint8_t checksum = ~sum + 1; // checksum of TFI + DATA
+    DMSG_HEX(checksum);
+    DMSG_HEX(PN532_POSTAMBLE);
     write(checksum);
     write(PN532_POSTAMBLE);
 
@@ -218,6 +226,7 @@ int8_t PN532_SPI::readAckFrame()
 
     digitalWrite(_ss, LOW);
     delay(1);
+    DMSG("[DEBUG] Requesting for ACK\n");
     write(DATA_READ);
 
     for (uint8_t i = 0; i < sizeof(PN532_ACK); i++)
@@ -227,7 +236,22 @@ int8_t PN532_SPI::readAckFrame()
 
     digitalWrite(_ss, HIGH);
 
-    return memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK));
+    int result = memcmp(ackBuf, PN532_ACK, sizeof(PN532_ACK));
+
+    if (result)
+    {
+        DMSG("[DEBUG] Invalid ACK recieved")
+        for (uint8_t i = 0; i < sizeof(PN532_ACK); i++)
+        {
+            DMSG_HEX(ackBuf[i]);
+        }
+        DMSG("\n");
+    }
+    else
+    {
+        DMSG("[DEBUG] ACK Received!");
+    }
+    return result;    
 }
 
 #endif // NFC_INTERFACE_SPI
