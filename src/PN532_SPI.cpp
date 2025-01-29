@@ -52,7 +52,7 @@ int8_t PN532_SPI::writeCommand(const uint8_t *header, uint8_t hlen, const uint8_
     while (!isReady())
     {
         delay(1);
-        timeout--;
+        timeout-=1;
         if (0 == timeout)
         {
             DMSG("[DEBUG] Time out when waiting for ACK\n");
@@ -72,7 +72,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
     while (!isReady())
     {
         delay(1);
-        time++;
+        time+=1;
         if (time > timeout)
         {
             DMSG("[DEBUG] Time out while waiting to read response\n");
@@ -80,6 +80,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
         }
     }
 
+    DMSG("[DEBUG] Read:");
     digitalWrite(_ss, LOW);
     delay(1);
 
@@ -87,33 +88,54 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
     do
     {
         write(DATA_READ);
-
-        if (0x00 != read() || // PREAMBLE
-            0x00 != read() || // STARTCODE1
-            0xFF != read()    // STARTCODE2
-        )
-        {
-
+        uint8_t read_byte = read();
+        DMSG_HEX(read_byte);
+        if (read_byte != PN532_PREAMBLE) {
             result = PN532_INVALID_FRAME;
+            DMSG("\n[DEBUG] Preamble incorrect \n");
             break;
         }
+        read_byte = read();
+        DMSG_HEX(read_byte);
+        if (read_byte != PN532_STARTCODE1) {
+            result = PN532_INVALID_FRAME;
+            DMSG("\n[DEBUG] Start code 1 Incorrect\n");
+            break;
+        }
+        read_byte = read();
+        DMSG_HEX(read_byte);
+        if (read_byte != PN532_STARTCODE2) {
+            result = PN532_INVALID_FRAME;
+            DMSG("\n[DEBUG] Start code 2 Incorrect\n");
+            break;
+        }
+        // if (0x00 != read() || // PREAMBLE
+        //     0x00 != read() || // STARTCODE1
+        //     0xFF != read()    // STARTCODE2
+        // )
+        // {
+
+        //     result = PN532_INVALID_FRAME;
+        //     break;
+        // }
 
         uint8_t length = read();
+        DMSG_HEX(length);
         if (0 != (uint8_t)(length + read()))
         { // checksum of length
             result = PN532_INVALID_FRAME;
+            DMSG("\n[DEBUG] Checksum of length incorrect\n");
             break;
         }
 
         uint8_t cmd = command + 1; // response command
+        DMSG_HEX(cmd);
         if (PN532_PN532TOHOST != read() || (cmd) != read())
         {
             result = PN532_INVALID_FRAME;
+            DMSG("\n[DEBUG] Invalid response command\n");
             break;
         }
-
-        DMSG("[DEBUG] Read:");
-        DMSG_HEX(cmd);
 
         length -= 2;
         if (length > len)
@@ -137,17 +159,17 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
 
             DMSG_HEX(buf[i]);
         }
-        DMSG('\n');
 
         uint8_t checksum = read();
+        DMSG_HEX(checksum);
         if (0 != (uint8_t)(sum + checksum))
         {
-            DMSG("[DEBUG] checksum is not ok\n");
+            DMSG("\n[DEBUG] checksum is not ok\n");
             result = PN532_INVALID_FRAME;
             break;
         }
-        read(); // POSTAMBLE
-
+        DMSG_HEX(read()); // POSTAMBLE
+        DMSG('\n');
         result = length;
     } while (0);
 
@@ -159,7 +181,7 @@ int16_t PN532_SPI::readResponse(uint8_t buf[], uint8_t len, uint16_t timeout)
 bool PN532_SPI::isReady()
 {
     digitalWrite(_ss, LOW);
-
+    delay(1);
     write(STATUS_READ);
     uint8_t status = read() & 1;
     digitalWrite(_ss, HIGH);
@@ -240,7 +262,7 @@ int8_t PN532_SPI::readAckFrame()
 
     if (result)
     {
-        DMSG("[DEBUG] Invalid ACK recieved")
+        DMSG("[DEBUG] Invalid ACK recieved");
         for (uint8_t i = 0; i < sizeof(PN532_ACK); i++)
         {
             DMSG_HEX(ackBuf[i]);
@@ -249,7 +271,7 @@ int8_t PN532_SPI::readAckFrame()
     }
     else
     {
-        DMSG("[DEBUG] ACK Received!");
+        DMSG("[DEBUG] ACK Received!\n");
     }
     return result;    
 }
