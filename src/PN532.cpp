@@ -331,7 +331,7 @@ bool PN532::SAMConfig(void)
 
     DMSG("[DEBUG] SAMConfig\n");
 
-    if (HAL(writeCommand)(pn532_packetbuffer, 4))
+    if (HAL(writeCommand)(pn532_packetbuffer, 2)) // Going to just use SAM to set it to normal
         return false;
 
     return (0 < HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer)));
